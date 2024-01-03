@@ -1,0 +1,125 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "inbounds": [{
+    "port": 1010,
+    "protocol": "dokodemo-door",
+    "settings": {
+      "followRedirect": true
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  }],
+  "outbounds": [
+    {
+      "mux": {
+        "concurrency": 50,
+        "enabled": false
+      },
+      "settings": {
+        "vnext": [
+          {
+            "users": [
+              {
+                "level": 8,
+                "alterId": 0,
+                "security": "auto",
+                "email": "",
+                "id": "{{ REMOTE_UUID }}"
+              }
+            ],
+            "address": "{{ REMOTE_HOST_ADDRESS }}",
+            "port": {{ REMOTE_PORT }}
+          }
+        ]
+      },
+      "protocol": "vmess",
+      "streamSettings": {
+        "wsSettings": {
+          "path": "{{ REMOTE_WS_PATH }}",
+          "headers": {
+            "host": ""
+          }
+        },
+        "security": "tls",
+        "tlsSettings": {
+          "fingerprint": "chrome",
+          "alpn": [],
+          "allowInsecure": false
+        },
+        "network": "ws"
+      },
+      "tag": "proxy"
+    }
+  ],
+  "api": {
+    "services": [
+      "StatsService"
+    ],
+    "tag": "api"
+  },
+  "dns": {
+    "queryStrategy": "UseIP",
+    "disableFallbackIfMatch": true,
+    "disableCache": true,
+    "disableFallback": true,
+    "tag": "dnsQuery",
+    "servers": [
+      {
+        "address": "8.8.8.8",
+        "skipFallback": false
+      }
+    ]
+  },
+  "stats": {},
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "api",
+        "inboundTag": [
+          "api"
+        ]
+      },
+      {
+        "inboundTag": [
+          "inDns"
+        ],
+        "type": "field",
+        "outboundTag": "outDns"
+      },
+      {
+        "outboundTag": "proxy",
+        "inboundTag": [
+          "dnsQuery"
+        ],
+        "type": "field"
+      }
+    ],
+    "balancers": []
+  },
+  "policy": {
+    "system": {
+      "statsOutboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsInboundUplink": true,
+      "statsOutboundDownlink": true
+    },
+    "levels": {
+      "8": {
+        "uplinkOnly": 1,
+        "connIdle": 30,
+        "statsUserDownlink": false,
+        "bufferSize": 0,
+        "handshake": 4,
+        "statsUserUplink": false,
+        "downlinkOnly": 1
+      }
+    }
+  },
+  "transport": {}
+}
