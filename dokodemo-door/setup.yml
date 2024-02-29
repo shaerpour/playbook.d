@@ -6,6 +6,11 @@
     - "vars/main.yml"
   tasks:
 
+    - name: "Ensure iptables is installed"
+      ansible.builtin.apt:
+        name: "iptables"
+        update_cache: true
+
     - name: "Check if all neccessary variables are defined"
       ansible.builtin.assert:
         that:
