@@ -1,0 +1,25 @@
+[Unit]
+Description=V2Ray Service
+Documentation=https://www.v2fly.org/
+After=network.target nss-lookup.target
+
+[Service]
+User=root
+ExecStartPre=/usr/sbin/iptables -t nat -N V2RAY
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -d {{ ansible_default_ipv4.address }} -j RETURN
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -d {{ REMOTE_HOST_ADDRESS }} -j RETURN
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -d 192.168.0.0/16 -j RETURN
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -d 10.0.0.0/8 -j RETURN
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -d 127.0.0.0/8 -j RETURN
+ExecStartPre=/usr/sbin/iptables -t nat -A V2RAY -p tcp -j REDIRECT --to-ports 1010
+ExecStartPre=/usr/sbin/iptables -t nat -A OUTPUT -j V2RAY
+ExecStart=/usr/local/bin/v2ray -config /usr/local/etc/v2ray/config.json
+ExecStop=/usr/sbin/iptables -t nat -F V2RAY
+ExecStop=/usr/sbin/iptables -t nat -D OUTPUT -j V2RAY
+ExecStop=/usr/sbin/iptables -t nat -X V2RAY
+
+Restart=on-failure
+RestartPreventExitStatus=23
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,58 @@
+---
+- name: "Setup Dokodemo-door protocol"
+  hosts: "dokodemo-door"
+  become: true
+  vars_files:
+    - "vars/main.yml"
+  tasks:
+
+    - name: "Ensure iptables is installed"
+      ansible.builtin.apt:
+        name: "iptables"
+        update_cache: true
+
+    - name: "Check if all neccessary variables are defined"
+      ansible.builtin.assert:
+        that:
+          - "REMOTE_HOST_ADDRESS is defined"
+          - "REMOTE_PORT is defined"
+          - "REMOTE_UUID is defined"
+          - "REMOTE_WS_PATH is defined"
+        fail_msg: "Define variables in vars/main.yml first"
+
+    - name: "Copy v2ray and v2ctl to remote server"
+      ansible.builtin.copy:
+        src: "files/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: "0755"
+      loop:
+        - "v2ray"
+        - "v2ctl"
+
+    - name: "Create /usr/local/etc/v2ray directory"
+      ansible.builtin.file:
+        name: "/usr/local/etc/v2ray"
+        state: "directory"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: "Copy config.json to remote server"
+      ansible.builtin.template:
+        src: "config.json.j2"
+        dest: "/usr/local/etc/v2ray/config.json"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: "Copy v2ray.service to remote server"
+      ansible.builtin.template:
+        src: "v2ray.service.j2"
+        dest: "/etc/systemd/system/v2ray.service"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: "DONE"
+      ansible.builtin.debug:
+        msg: "Done! just start and stop v2ray service ... Enjoy :)"
