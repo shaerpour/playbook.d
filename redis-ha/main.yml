@@ -1,0 +1,6 @@
+---
+- name: "Setup redis master servers for HA"
+  hosts: "all"
+  become: true
+  roles:
+    - "redis-ha"

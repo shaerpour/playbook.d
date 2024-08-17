@@ -1,0 +1,16 @@
+all:
+  hosts:
+  children:
+    master:
+      hosts:
+        master:
+          ansible_host: ""
+          ansible_user: ""
+    slave:
+      hosts:
+        slave-1:
+          ansible_host: ""
+          ansible_user: ""
+        slave-2:
+          ansible_host: ""
+          ansible_user: ""

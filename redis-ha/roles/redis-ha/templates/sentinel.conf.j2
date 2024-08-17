@@ -1,0 +1,16 @@
+bind {{ ansible_default_ipv4.address }}
+port 26379
+daemonize yes
+requirepass {{ sentinel_pass }}
+pidfile /var/run/sentinel/redis-sentinel.pid
+logfile /var/log/redis/redis-sentinel.log
+dir /var/lib/redis
+{% if ansible_hostname in groups["slave"] %}
+sentinel monitor master {{ hostvars['master']['ansible_host'] }} 6379 {{ groups['slave'] | length }}
+{% else %}
+sentinel monitor master {{ ansible_default_ipv4.address }} 6379 {{ groups['slave'] | length }}
+{% endif %}
+sentinel down-after-milliseconds master 5000
+sentinel failover-timeout master 5000
+sentinel parallel-syncs master 1
+sentinel auth-pass master {{ master_pass }}

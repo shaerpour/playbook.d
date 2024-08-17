@@ -1,0 +1,25 @@
+---
+- name: "Gather package facts"
+  package_facts:
+    manager: "auto"
+
+- name: "Install redis if not installed"
+  apt:
+    pkg:
+      - "redis-server"
+      - "redis-sentinel"
+    state: "present"
+  when: "'redis-server' or 'redis-sentinel' not in ansible_facts.packages"
+
+- name: "Copy config templates to server"
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/redis/{{ item }}"
+    owner: "redis"
+    group: "redis"
+    mode: "0644"
+  loop:
+    - "redis.conf"
+    - "sentinel.conf"
+  notify:
+    - "Restart services"

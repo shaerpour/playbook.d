@@ -1,0 +1,13 @@
+bind {{ ansible_default_ipv4.address }}
+port 6379
+daemonize yes
+pidfile /var/run/redis/redis-server.pid
+logfile /var/log/redis/redis-server.log
+dir /var/lib/redis
+masterauth {{ master_pass }}
+{% if ansible_hostname in groups["slave"] %}
+requirepass {{ slave_pass }}
+replicaof {{ hostvars['master']['ansible_host'] }} 6379
+{% else %}
+requirepass {{ master_pass }}
+{% endif %}

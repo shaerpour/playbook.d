@@ -1,0 +1,4 @@
+---
+master_pass: "password"
+slave_pass: "password"
+sentinel_pass: "password"
