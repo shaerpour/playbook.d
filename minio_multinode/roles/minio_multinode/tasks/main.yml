@@ -1,0 +1,108 @@
+---
+- name: "Assertion for important variables"
+  assert:
+    that:
+      - minio_disk_count is defined
+      - minio_disk_count >= 2
+
+- name: "Gather package facts"
+  package_facts:
+    manager: "auto"
+
+- name: "Ensure minio is installed"
+  when: "'minio' not in ansible_facts.packages"
+  block:
+    - name: "Download minio package"
+      get_url:
+        url: "https://dl.min.io/server/minio/release/linux-amd64/archive/minio_20240803043323.0.0_amd64.deb"
+        dest: "/tmp/minio.deb"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+    - name: "Install downloaded package"
+      apt:
+        deb: "/tmp/minio.deb"
+
+- name: "Create minio-user user and group"
+  block:
+    - name: "Create group"
+      group:
+        name: "minio-user"
+        state: "present"
+    - name: "Create user"
+      user:
+        name: "minio-user"
+        group: "minio-user"
+        create_home: true
+        system: true
+
+- name: "Fact all disks"
+  block:
+    - name: "Get device name"
+      set_fact:
+        disks: "{{ disks | default([]) + ['/dev/' + item.key] }}"
+      when: 
+        - item.value.partitions == {}
+        - item.value.vendor != None
+        - not item.key | regex_search("^(sr|loop)")
+      with_dict: "{{ ansible_devices }}"
+    - name: "Get disks"
+      set_fact:
+        "disk_{{ item }}": "{{ disks[item | int - 1] }}"
+      with_sequence: start=1 end={{ minio_disk_count }}
+
+- name: "Update /etc/hosts file"
+  lineinfile:
+    dest: "/etc/hosts"
+    regexp: ".*{{ item }}$"
+    line: "{{ hostvars[item].ansible_host }} {{ item }}"
+    state: "present"
+  with_items: "{{ groups.all }}"
+
+- name: "Format disks to ext4"
+  filesystem:
+    fstype: "ext4"
+    dev: "{{ vars['disk_' + item] }}"
+  with_sequence: start=1 end={{ minio_disk_count }}
+
+- name: "Mount disks"
+  mount:
+    src: "{{ vars['disk_' + item] }}"
+    path: "/mnt/disk{{ item }}/minio"
+    fstype: "ext4"
+    state: "mounted"
+  with_sequence: start=1 end={{ minio_disk_count }}
+
+- name: "Remove .minio.sys if exists"
+  file:
+    path: "/mnt/disk{{ item }}/minio/.minio.sys"
+    state: "absent"
+  with_sequence: start=1 end={{ minio_disk_count }}
+
+- name: "Set permission for minio-user"
+  file:
+    path: "/mnt/disk{{ item }}/minio"
+    state: "directory"
+    owner: "minio-user"
+    group: "minio-user"
+    recurse: true
+  with_sequence: start=1 end={{ minio_disk_count }}
+
+- name: "Create systemd service file"
+  copy:
+    src: "files/minio.service"
+    dest: "/etc/systemd/system/minio.service"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: "Create minio default file"
+  template:
+    src: "templates/default.j2"
+    dest: "/etc/default/minio"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+    changed_when: true # Force handler to restart minio service
+  notify:
+    - "Restart minio service"

@@ -1,0 +1,6 @@
+---
+- name: "Deploy minio cluster"
+  hosts: "all"
+  become: true
+  roles:
+    - "minio_multinode"

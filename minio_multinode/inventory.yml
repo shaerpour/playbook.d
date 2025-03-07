@@ -1,0 +1,7 @@
+---
+all:
+  hosts:
+    minio-1:
+      ansible_host: ""
+    minio-2:
+      ansible_host: ""

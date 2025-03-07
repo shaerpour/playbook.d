@@ -1,0 +1,4 @@
+---
+minio_multinode_root_user: "minioadmin"
+minio_multinode_root_password: "minioadmin"
+minio_disk_count: 2

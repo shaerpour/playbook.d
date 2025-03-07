@@ -1,0 +1,4 @@
+---
+# minio_multinode_root_user: ""         # At least 3 characters
+# minio_multinode_root_password: ""     # At least 8 characters
+# minio_disk_count: 2                   # Number of disks per node (At least 2 disks needed)
