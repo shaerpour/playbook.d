@@ -4,7 +4,7 @@
     that:
       - minio_disk_count is defined
       - minio_disk_count >= 2
-      - minio_multinode_root_password | length > 8
+      - minio_multinode_root_password | length >= 8
 
 - name: "Gather package facts"
   package_facts:
