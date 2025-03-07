@@ -42,7 +42,7 @@
     - name: "Get device name"
       set_fact:
         disks: "{{ disks | default([]) + ['/dev/' + item.key] }}"
-      when: 
+      when:
         - item.value.partitions == {}
         - item.value.vendor != None
         - not item.key | regex_search("^(sr|loop)")
