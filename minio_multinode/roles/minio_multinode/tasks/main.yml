@@ -103,6 +103,6 @@
     owner: "root"
     group: "root"
     mode: "0644"
-    changed_when: true # Force handler to restart minio service
+  changed_when: true # Force handler to restart minio service
   notify:
     - "Restart minio service"
